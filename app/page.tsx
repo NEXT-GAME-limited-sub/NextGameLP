@@ -175,7 +175,7 @@ export default async function Page() {
             <div className={styles.hiringBody}>
               <p className={styles.hiringLead}>
                 障害者がスキルで稼ぎ、その分だけ従業員が業界最高峰の所得を得られる革命的な未来を、本気で実現する為に舞い戻って来た私が直接経営する
-                &quot;NEXTGAME&quot;
+                「NEXTGAME」
                 <br />
                 誰もが業界最高峰の所得を得られる革命的な未来へ。
                 <br />
