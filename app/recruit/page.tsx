@@ -1,6 +1,6 @@
-import { getRecruitList } from '@/app/_libs/microcms';
+import { getRecruitList } from '../_libs/microcms';
 import styles from './page.module.css';
-import ButtonLink from '@/app/_components/ButtonLink';
+import ButtonLink from '../_components/ButtonLink';
 
 /**
  * Edge runtime は使わない
