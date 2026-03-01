@@ -1,89 +1,67 @@
-import { getRecruitList } from '../_libs/microcms';
-import styles from './page.module.css';
-import ButtonLink from '../_components/ButtonLink';
-
 export const runtime = 'edge';
 
-export default async function Page(props: any) {
-  const searchParams = props?.searchParams;
+import styles from './page.module.css';
+import ButtonLink from '@/app/_components/ButtonLink';
+
+async function fetchRecruitList(draftKey?: string) {
+  const serviceDomain = process.env.MICROCMS_SERVICE_DOMAIN;
+  const apiKey = process.env.MICROCMS_API_KEY;
+
+  if (!serviceDomain || !apiKey) {
+    throw new Error('microCMS env is missing');
+  }
+
+  const url = `https://${serviceDomain}.microcms.io/api/v1/recruit${
+    draftKey ? ?draftKey=${draftKey} : ''
+  }`;
+
+  const res = await fetch(url, {
+    headers: {
+      'X-MICROCMS-API-KEY': apiKey,
+    },
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch recruit list');
+  }
+
+  return res.json();
+}
+
+export default async function RecruitPage({ searchParams }: any) {
+  const draftKey =
+    typeof searchParams?.dk === 'string'
+      ? searchParams.dk
+      : undefined;
 
   let data = { contents: [] as any[] };
 
   try {
-    const draftKey =
-      typeof searchParams?.dk === 'string'
-        ? searchParams.dk
-        : undefined;
-
-    data = await getRecruitList({ draftKey });
+    data = await fetchRecruitList(draftKey);
   } catch (error) {
-    console.error('Failed to fetch recruit list:', error);
+    console.error(error);
   }
 
   return (
     <div className={styles.container}>
       <section className={styles.positions}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>募集職種</h2>
-        </div>
+        <h2>募集職種</h2>
 
-        <ul className={styles.positionList}>
-          {data.contents.map((item) => (
-            <li key={item.id} className={styles.positionItem}>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </li>
-          ))}
-        </ul>
+        {data.contents.length === 0 && (
+          <p>現在募集中の職種はありません。</p>
+        )}
+
+        {data.contents.map((item: any) => (
+          <div key={item.id} className={styles.card}>
+            <h3>{item.title}</h3>
+            <p>{item.description}</p>
+            <ButtonLink href={`/recruit/${item.id}`}>
+              詳細を見る
+            </ButtonLink>
+          </div>
+        ))}
       </section>
-
-      <section className={styles.process}>
-        <h2 className={styles.sectionTitle}>選考フロー</h2>
-
-        <ol className={styles.processList}>
-          <li className={styles.processItem}>
-            <span className={styles.processNumber}>01</span>
-            <div>
-              <p className={styles.processTitle}>書類選考</p>
-              <p className={styles.processText}>
-                ご応募内容をもとに選考を行います。
-              </p>
-            </div>
-          </li>
-
-          <li className={styles.processItem}>
-            <span className={styles.processNumber}>02</span>
-            <div>
-              <p className={styles.processTitle}>一次面接</p>
-              <p className={styles.processText}>
-                業務内容やスキルについて確認します。
-              </p>
-            </div>
-          </li>
-
-          <li className={styles.processItem}>
-            <span className={styles.processNumber}>03</span>
-            <div>
-              <p className={styles.processTitle}>最終面接</p>
-              <p className={styles.processText}>
-                ビジョンの共感度とカルチャーフィットを確認します。
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <div className={styles.footer}>
-        <div>
-          <h2 className={styles.message}>We are hiring</h2>
-          <p>
-            私たちは共にチャレンジする仲間を募集しています。
-          </p>
-        </div>
-        <ButtonLink href="/contact">
-          エントリーする
-        </ButtonLink>
-      </div>
     </div>
   );
 }
