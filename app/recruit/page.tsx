@@ -1,10 +1,10 @@
-import { getRecruitList } from '../_libs/microcms';
+export const runtime = 'nodejs';
+
+import { getRecruitList } from '@/app/_libs/microcms';
 import styles from './page.module.css';
-import ButtonLink from '../_components/ButtonLink';
+import ButtonLink from '@/app/_components/ButtonLink';
 
-export const runtime = 'edge';
-
-export default async function Page(props: any) {
+export default async function RecruitPage(props: any) {
   const searchParams = props?.searchParams;
 
   let data = { contents: [] as any[] };
@@ -22,23 +22,39 @@ export default async function Page(props: any) {
 
   return (
     <div className={styles.container}>
-      <section className={styles.positions}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>募集職種</h2>
-        </div>
-
-        <ul className={styles.positionList}>
-          {data.contents.map((item) => (
-            <li key={item.id} className={styles.positionItem}>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </li>
-          ))}
-        </ul>
+      {/* Hero */}
+      <section className={styles.hero}>
+        <h1>recruit</h1>
+        <p>採用情報</p>
       </section>
 
+      {/* 募集職種 */}
+      <section className={styles.positions}>
+        <h2>募集職種</h2>
+
+        {data.contents.length === 0 && (
+          <p className={styles.noData}>
+            現在募集中の職種はありません。
+          </p>
+        )}
+
+        <div className={styles.cards}>
+          {data.contents.map((item) => (
+            <div key={item.id} className={styles.card}>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+
+              <ButtonLink href={`/recruit/${item.id}`}>
+                詳細を見る
+              </ButtonLink>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 選考フロー */}
       <section className={styles.process}>
-        <h2 className={styles.sectionTitle}>選考フロー</h2>
+        <h2>選考フロー</h2>
 
         <ol className={styles.processList}>
           <li className={styles.processItem}>
@@ -73,6 +89,7 @@ export default async function Page(props: any) {
         </ol>
       </section>
 
+      {/* CTA */}
       <div className={styles.footer}>
         <div>
           <h2 className={styles.message}>We are hiring</h2>
@@ -80,6 +97,7 @@ export default async function Page(props: any) {
             私たちは共にチャレンジする仲間を募集しています。
           </p>
         </div>
+
         <ButtonLink href="/contact">
           エントリーする
         </ButtonLink>
