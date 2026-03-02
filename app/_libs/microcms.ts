@@ -179,3 +179,21 @@ export const getMeta = async (queries?: MicroCMSQueries) => {
 
   return data;
 };
+export type Article = {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  thumbnail?: {
+    url: string;
+    height: number;
+    width: number;
+  };
+  category?: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+};
