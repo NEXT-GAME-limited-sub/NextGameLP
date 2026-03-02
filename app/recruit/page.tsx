@@ -2,7 +2,7 @@ import { getRecruitList } from '../_libs/microcms';
 import styles from './page.module.css';
 import ButtonLink from '../_components/ButtonLink';
 
-export const runtime = 'edge';
+
 
 export default async function Page(props: any) {
   const searchParams = props?.searchParams;
