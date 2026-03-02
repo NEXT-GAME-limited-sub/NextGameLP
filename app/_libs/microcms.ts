@@ -1,10 +1,4 @@
-import { createClient } from 'microcms-js-sdk';
-import type {
-  MicroCMSQueries,
-  MicroCMSImage,
-  MicroCMSDate,
-  MicroCMSContentId,
-} from 'microcms-js-sdk';
+import type { MicroCMSImage, MicroCMSDate, MicroCMSContentId } from 'microcms-js-sdk';
 import { notFound } from 'next/navigation';
 
 /* ===============================
@@ -24,10 +18,11 @@ export type News = {
   content: string;
   thumbnail?: MicroCMSImage;
   category: Category;
-};
+} & MicroCMSContentId &
+  MicroCMSDate;
 
-// ★ Article型（これが重要）
-export type Article = News & MicroCMSContentId & MicroCMSDate;
+// ★ Article型（これを追加）
+export type Article = News;
 
 // メンバー
 export type Member = {
@@ -35,7 +30,8 @@ export type Member = {
   position: string;
   profile: string;
   image?: MicroCMSImage;
-};
+} & MicroCMSContentId &
+  MicroCMSDate;
 
 // 採用情報
 export type Recruit = {
@@ -43,7 +39,8 @@ export type Recruit = {
   wages: string;
   limit: string;
   'working-hours': string;
-};
+} & MicroCMSContentId &
+  MicroCMSDate;
 
 // 事業内容
 export type Business = {
@@ -52,7 +49,8 @@ export type Business = {
   image?: MicroCMSImage;
   link: string;
   content: string;
-};
+} & MicroCMSContentId &
+  MicroCMSDate;
 
 // メタ情報
 export type Meta = {
@@ -76,145 +74,93 @@ if (!process.env.MICROCMS_API_KEY) {
   throw new Error('MICROCMS_API_KEY is required');
 }
 
+const BASE_URL = https://${process.env.MICROCMS_SERVICE_DOMAIN}.microcms.io/api/v1;
+
+const headers = {
+  'X-MICROCMS-API-KEY': process.env.MICROCMS_API_KEY!,
+};
+
 /* ===============================
-   Client初期化
+   共通fetch
 ================================ */
 
-export const client = createClient({
-  serviceDomain: process.env.MICROCMS_SERVICE_DOMAIN,
-  apiKey: process.env.MICROCMS_API_KEY,
-});
+async function fetchMicroCMS<T>(endpoint: string, query = ''): Promise<T> {
+  const res = await fetch(`${BASE_URL}/${endpoint}${query}`, {
+    headers,
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    notFound();
+  }
+
+  return res.json();
+}
 
 /* ===============================
    News
 ================================ */
 
-export const getNewsList = async (queries?: MicroCMSQueries) => {
-  const listData = await client
-    .getList<News>({
-      endpoint: 'news',
-      queries,
-    })
-    .catch(notFound);
-
-  return listData;
+export const getNewsList = async () => {
+  return fetchMicroCMS<{ contents: News[] }>('news');
 };
 
-export const getNewsDetail = async (
-  contentId: string,
-  queries?: MicroCMSQueries
-) => {
-  const detailData = await client
-    .getListDetail<News>({
-      endpoint: 'news',
-      contentId,
-      queries,
-    })
-    .catch(notFound);
-
-  return detailData;
+export const getNewsDetail = async (contentId: string) => {
+  return fetchMicroCMS<News>(`news/${contentId}`);
 };
 
 /* ===============================
    Category
 ================================ */
 
-export const getCategoryList = async (queries?: MicroCMSQueries) => {
-  const listData = await client
-    .getList<Category>({
-      endpoint: 'categories',
-      queries,
-    })
-    .catch(notFound);
-
-  return listData;
+export const getCategoryList = async () => {
+  return fetchMicroCMS<{ contents: Category[] }>('categories');
 };
 
-export const getCategoryDetail = async (
-  contentId: string,
-  queries?: MicroCMSQueries
-) => {
-  const detailData = await client
-    .getListDetail<Category>({
-      endpoint: 'categories',
-      contentId,
-      queries,
-    })
-    .catch(notFound);
-
-  return detailData;
+export const getCategoryDetail = async (contentId: string) => {
+  return fetchMicroCMS<Category>(`categories/${contentId}`);
 };
 
 /* ===============================
    Members
 ================================ */
 
-export const getMembersList = async (queries?: MicroCMSQueries) => {
-  const listData = await client
-    .getList<Member>({
-      endpoint: 'members',
-      queries,
-    })
-    .catch(notFound);
-
-  return listData;
+export const getMembersList = async () => {
+  return fetchMicroCMS<{ contents: Member[] }>('members');
 };
 
 /* ===============================
    Recruit
 ================================ */
 
-export const getRecruitList = async (queries?: MicroCMSQueries) => {
-  const listData = await client
-    .getList<Recruit>({
-      endpoint: 'recruit',
-      queries,
-    })
-    .catch(notFound);
+export const getRecruitList = async (params?: { draftKey?: string }) => {
+  const query = params?.draftKey
+    ? `?draftKey=${params.draftKey}`
+    : '';
 
-  return listData;
+  return fetchMicroCMS<{ contents: Recruit[] }>('recruit', query);
 };
 
 /* ===============================
    Business
 ================================ */
 
-export const getBusinessList = async (queries?: MicroCMSQueries) => {
-  const listData = await client
-    .getList<Business>({
-      endpoint: 'business',
-      queries,
-    })
-    .catch(notFound);
-
-  return listData;
+export const getBusinessList = async () => {
+  return fetchMicroCMS<{ contents: Business[] }>('business');
 };
 
-export const getBusinessDetail = async (
-  contentId: string,
-  queries?: MicroCMSQueries
-) => {
-  const detailData = await client
-    .getListDetail<Business>({
-      endpoint: 'business',
-      contentId,
-      queries,
-    })
-    .catch(notFound);
-
-  return detailData;
+export const getBusinessDetail = async (contentId: string) => {
+  return fetchMicroCMS<Business>(`business/${contentId}`);
 };
 
 /* ===============================
    Meta
 ================================ */
-export const getMeta = async (queries?: MicroCMSQueries) => {
-  const data = await client
-    .getObject<Meta>({
-      endpoint: 'meta',
-      queries,
-    })
-    .catch(() => null);
 
-  return data;
-}
+export const getMeta = async () => {
+  try {
+    return await fetchMicroCMS<Meta>('meta');
+  } catch {
+    return null;
+  }
+};
