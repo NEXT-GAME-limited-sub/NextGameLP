@@ -1,86 +1,70 @@
-import Image from 'next/image';
-import { Metadata } from 'next';
-import { formatRichText } from '@/app/_libs/utils';
 import { getBusinessDetail } from '@/app/_libs/microcms';
-import ButtonLink from '@/app/_components/ButtonLink';
 import styles from './page.module.css';
+import Image from 'next/image';
+import { notFound } from 'next/navigation';
 
 type Props = {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
-  searchParams: Promise<{
-    dk: string;
-  }>;
+  };
 };
 
-export const runtime = 'edge';
+export default async function Page({ params }: Props) {
+  const data = await getBusinessDetail(params.id);
 
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
-  const data = await getBusinessDetail(params.id, {
-    draftKey: searchParams.dk,
-  });
-
-  return {
-    title: '事業内容',
-    description: data.description,
-    openGraph: {
-      title: '事業内容',
-      description: data.description,
-      images: [data?.image?.url || data?.logo?.url || ''],
-    },
-    alternates: {
-      canonical: `/business/${params.id}`,
-    },
-  };
-}
-
-export default async function Page(props: Props) {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
-  const data = await getBusinessDetail(params.id, {
-    draftKey: searchParams.dk,
-  });
+  if (!data) {
+    notFound();
+  }
 
   return (
-    <main className={styles.container}>
-      <h1 className={styles.title}>
-        {data.logo ? (
-          <Image
-            src={data.logo.url}
-            alt=""
-            width={data.logo.width}
-            height={data.logo.height}
-            className={styles.logo}
-          />
-        ) : (
-          '事業内容'
+    <div className={styles.container}>
+      <section className={styles.hero}>
+        {data.image && (
+          <div className={styles.heroImage}>
+            <Image
+              src={data.image.url}
+              alt={data.description}
+              width={1200}
+              height={600}
+            />
+          </div>
         )}
-      </h1>
-      <p className={styles.description}>{data.description}</p>
-      {data.image && (
-        <Image
-          src={data.image.url}
-          alt=""
-          width={data.image.width}
-          height={data.image.height}
-          className={styles.thumbnail}
+      </section>
+
+      <section className={styles.content}>
+        <h1 className={styles.title}>{data.description}</h1>
+
+        {data.logo && (
+          <div className={styles.logo}>
+            <Image
+              src={data.logo.url}
+              alt="logo"
+              width={200}
+              height={200}
+            />
+          </div>
+        )}
+
+        <div
+          className={styles.body}
+          dangerouslySetInnerHTML={{
+            __html: data.content,
+          }}
         />
-      )}
-      <div
-        className={styles.content}
-        dangerouslySetInnerHTML={{
-          __html: `${formatRichText(data.content)}`,
-        }}
-      />
-      <div className={styles.footer}>
-        <ButtonLink href={data.link} isExternal>
-          サービスサイトへ
-        </ButtonLink>
-        <ButtonLink href="/business">事業一覧へ</ButtonLink>
-      </div>
-    </main>
+
+        {data.link && (
+          <div className={styles.linkWrapper}>
+            <a
+              href={data.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.link}
+            >
+              詳しくはこちら
+            </a>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
