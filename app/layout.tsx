@@ -1,9 +1,9 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { getMeta } from '@/app/_libs/microcms';
 import Footer from '@/app/_components/Footer';
 import Header from '@/app/_components/Header';
 import InitialLoading from '@/app/_components/InitialLoading';
-import MotionWrapper from '@/app/_components/MotionWrapper'; // 【追記1】読み込み
+import MotionWrapper from '@/app/_components/MotionWrapper';
 import './globals.css';
 import styles from './layout.module.css';
 
@@ -13,22 +13,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const defaultTitle = 'NEXTGAME株式会社 | 未来と今を繋げるゲーム';
   const defaultDesc = '愛知県名古屋市のNEXTGAME株式会社です。';
 
-  if (!data) {
-    return{
-      title: defaultTitle,
-      description: defaultDesc,
-    }
-  }
+  const baseUrl =
+    process.env.BASE_URL ?? 'https://nextgame-limited.com';
 
-  return {
-    metadataBase: new URL(process.env.BASE_URL || 'http://localhost:3000'),
-    title: data.title || defaultTitle,
-    description: data.description || defaultDesc,
-    openGraph: {
-      title: data.ogTitle || defaultTitle,
-      description: data.ogDescription || defaultDesc,
-      images: [data.ogImage?.url || ''],
-    },
+  const metadata: Metadata = {
+    metadataBase: new URL(baseUrl),
+    title: data?.title ?? defaultTitle,
+    description: data?.description ?? defaultDesc,
     icons: {
       icon: [
         { url: '/favicons/favicon.ico' },
@@ -41,32 +32,41 @@ export async function generateMetadata(): Promise<Metadata> {
         {
           url: '/favicons/apple-touch-icon.png',
           sizes: '180x180',
-          rel: 'apple-touch-icon',
         },
       ],
     },
     manifest: '/favicons/manifest.json',
     alternates: {
-      canonical: data.canonical,
+      canonical: data?.canonical ?? baseUrl,
     },
   };
+
+  // openGraph は安全に追加
+  if (data?.ogTitle || data?.ogDescription || data?.ogImage?.url) {
+    metadata.openGraph = {
+      title: data?.ogTitle ?? defaultTitle,
+      description: data?.ogDescription ?? defaultDesc,
+      ...(data?.ogImage?.url && {
+        images: [{ url: data.ogImage.url }],
+      }),
+    };
+  }
+
+  return metadata;
 }
 
 type Props = {
   children: React.ReactNode;
 };
 
-export default async function RootLayout({ children }: Props) {
+export default function RootLayout({ children }: Props) {
   return (
     <html lang="ja">
       <body className={`${styles.body} loading-active`}>
         <InitialLoading />
         <Header />
-        {/* 【追記2】mainの中身をMotionWrapperで囲む */}
         <main className={styles.main}>
-          <MotionWrapper>
-            {children}
-          </MotionWrapper>
+          <MotionWrapper>{children}</MotionWrapper>
         </main>
         <Footer />
       </body>
