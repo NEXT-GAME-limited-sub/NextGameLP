@@ -1,94 +1,205 @@
-import { getRecruitList } from '../_libs/microcms';
-import styles from './page.module.css';
-import ButtonLink from '../_components/ButtonLink';
+import { createClient } from 'microcms-js-sdk';
+import type {
+  MicroCMSQueries,
+  MicroCMSImage,
+  MicroCMSDate,
+  MicroCMSContentId,
+} from 'microcms-js-sdk';
+import { notFound } from 'next/navigation';
 
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic'; // 🔥 これが超重要
+/* ===============================
+   型定義
+================================ */
 
-export default async function Page(props: any) {
-  const searchParams = props?.searchParams;
+// カテゴリー
+export type Category = {
+  name: string;
+} & MicroCMSContentId &
+  MicroCMSDate;
 
-  let data = { contents: [] as any[] };
+// ニュース
+export type News = {
+  title: string;
+  description: string;
+  content: string;
+  thumbnail?: MicroCMSImage;
+  category: Category;
+} & MicroCMSContentId &
+  MicroCMSDate;
 
-  try {
-    const draftKey =
-      typeof searchParams?.dk === 'string'
-        ? searchParams.dk
-        : undefined;
+// メンバー
+export type Member = {
+  name: string;
+  position: string;
+  profile: string;
+  image?: MicroCMSImage;
+} & MicroCMSContentId &
+  MicroCMSDate;
 
-    data = await getRecruitList(
-      draftKey ? { draftKey } : undefined
-    );
-  } catch (error) {
-    console.error('Failed to fetch recruit list:', error);
-  }
+// 採用情報（← 今のmicroCMS構造に合わせて修正済み）
+export type Recruit = {
+  role: string;
+  job_description?: string;
+  salary?: string;
+  capacity?: string;
+  working_hours?: string;
+} & MicroCMSContentId &
+  MicroCMSDate;
 
-  return (
-    <div className={styles.container}>
-      <section className={styles.positions}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>募集職種</h2>
-        </div>
+// 事業内容
+export type Business = {
+  logo?: MicroCMSImage;
+  description: string;
+  image?: MicroCMSImage;
+  link: string;
+  content: string;
+} & MicroCMSContentId &
+  MicroCMSDate;
 
-        <ul className={styles.positionList}>
-          {data.contents.map((item) => (
-            <li key={item.id} className={styles.positionItem}>
-              <h3>{item.role}</h3>
-              <p>給与：{item.wages}</p>
-              <p>定員：{item.limit}</p>
-              <p>勤務時間：{item['working-hours']}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+// メタ情報
+export type Meta = {
+  title?: string;
+  description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: MicroCMSImage;
+  canonical?: string;
+};
 
-      <section className={styles.process}>
-        <h2 className={styles.sectionTitle}>選考フロー</h2>
+/* ===============================
+   環境変数チェック
+================================ */
 
-        <ol className={styles.processList}>
-          <li className={styles.processItem}>
-            <span className={styles.processNumber}>01</span>
-            <div>
-              <p className={styles.processTitle}>書類選考</p>
-              <p className={styles.processText}>
-                ご応募内容をもとに選考を行います。
-              </p>
-            </div>
-          </li>
-
-          <li className={styles.processItem}>
-            <span className={styles.processNumber}>02</span>
-            <div>
-              <p className={styles.processTitle}>一次面接</p>
-              <p className={styles.processText}>
-                業務内容やスキルについて確認します。
-              </p>
-            </div>
-          </li>
-
-          <li className={styles.processItem}>
-            <span className={styles.processNumber}>03</span>
-            <div>
-              <p className={styles.processTitle}>最終面接</p>
-              <p className={styles.processText}>
-                ビジョンの共感度とカルチャーフィットを確認します。
-              </p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <div className={styles.footer}>
-        <div>
-          <h2 className={styles.message}>We are hiring</h2>
-          <p>
-            私たちは共にチャレンジする仲間を募集しています。
-          </p>
-        </div>
-        <ButtonLink href="/contact">
-          エントリーする
-        </ButtonLink>
-      </div>
-    </div>
-  );
+if (!process.env.MICROCMS_SERVICE_DOMAIN) {
+  throw new Error('MICROCMS_SERVICE_DOMAIN is required');
 }
+
+if (!process.env.MICROCMS_API_KEY) {
+  throw new Error('MICROCMS_API_KEY is required');
+}
+
+/* ===============================
+   Client初期化
+================================ */
+
+export const client = createClient({
+  serviceDomain: process.env.MICROCMS_SERVICE_DOMAIN,
+  apiKey: process.env.MICROCMS_API_KEY,
+});
+
+/* ===============================
+   News
+================================ */
+
+export const getNewsList = async (queries?: MicroCMSQueries) => {
+  return await client
+    .getList<News>({
+      endpoint: 'news',
+      queries,
+    })
+    .catch(notFound);
+};
+
+export const getNewsDetail = async (
+  contentId: string,
+  queries?: MicroCMSQueries
+) => {
+  return await client
+    .getListDetail<News>({
+      endpoint: 'news',
+      contentId,
+      queries,
+    })
+    .catch(notFound);
+};
+
+/* ===============================
+   Category
+================================ */
+
+export const getCategoryList = async (queries?: MicroCMSQueries) => {
+  return await client
+    .getList<Category>({
+      endpoint: 'categories',
+      queries,
+    })
+    .catch(notFound);
+};
+
+export const getCategoryDetail = async (
+  contentId: string,
+  queries?: MicroCMSQueries
+) => {
+  return await client
+    .getListDetail<Category>({
+      endpoint: 'categories',
+      contentId,
+      queries,
+    })
+    .catch(notFound);
+};
+
+/* ===============================
+   Members
+================================ */
+
+export const getMembersList = async (queries?: MicroCMSQueries) => {
+  return await client
+    .getList<Member>({
+      endpoint: 'members',
+      queries,
+    })
+    .catch(notFound);
+};
+
+/* ===============================
+   Recruit
+================================ */
+
+export const getRecruitList = async (queries?: MicroCMSQueries) => {
+  return await client
+    .getList<Recruit>({
+      endpoint: 'recruit',
+      queries,
+    })
+    .catch(notFound);
+};
+
+/* ===============================
+   Business
+================================ */
+
+export const getBusinessList = async (queries?: MicroCMSQueries) => {
+  return await client
+    .getList<Business>({
+      endpoint: 'business',
+      queries,
+    })
+    .catch(notFound);
+};
+
+export const getBusinessDetail = async (
+  contentId: string,
+  queries?: MicroCMSQueries
+) => {
+  return await client
+    .getListDetail<Business>({
+      endpoint: 'business',
+      contentId,
+      queries,
+    })
+    .catch(notFound);
+};
+
+/* ===============================
+   Meta
+================================ */
+
+export const getMeta = async (queries?: MicroCMSQueries) => {
+  return await client
+    .getObject<Meta>({
+      endpoint: 'meta',
+      queries,
+    })
+    .catch(() => null);
+};
