@@ -2,7 +2,6 @@ import { getRecruitList } from '../_libs/microcms';
 import styles from './page.module.css';
 import ButtonLink from '../_components/ButtonLink';
 
-// ✅ runtime = 'edge' を削除
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -36,22 +35,24 @@ export default async function Page(props: any) {
             <li key={item.id} className={styles.positionItem}>
               <h3>{item.role}</h3>
 
-              {/* 仕事内容（リッチテキスト） */}
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: item.job_description,
-                }}
-              />
+              {item.job_description && (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: item.job_description,
+                  }}
+                />
+              )}
 
-              {/* 給与（リッチテキスト） */}
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: item.salary,
-                }}
-              />
+              {item.salary && (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: item.salary,
+                  }}
+                />
+              )}
 
-              <p>募集人数：{item.capacity}</p>
-              <p>勤務時間：{item.working_hours}</p>
+              {item.capacity && <p>募集人数：{item.capacity}</p>}
+              {item.working_hours && <p>勤務時間：{item.working_hours}</p>}
             </li>
           ))}
         </ul>
